@@ -5,11 +5,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Use SQLite for MVP (zero setup required)
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./clearledger.db")
+# Use MySQL for database
+DATABASE_URL = os.getenv("DATABASE_URL", "mysql+pymysql://root@localhost:3306/clearledger_db")
 
 # Create engine
-engine = create_engine(DATABASE_URL, echo=True, connect_args={"check_same_thread": False})
+engine = create_engine(DATABASE_URL, echo=True)
 
 
 def create_db_and_tables():
