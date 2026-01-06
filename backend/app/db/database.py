@@ -5,11 +5,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Explicitly use postgresql+psycopg:// for psycopg3
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg://clearledger:clearledger@localhost:5432/clearledger_db")
+# Use standard postgresql:// - will use psycopg2-binary driver
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://clearledger:clearledger@localhost:5432/clearledger_db")
 
-# Create engine with psycopg3
-engine = create_engine(DATABASE_URL, echo=True, future=True)
+# Create engine
+engine = create_engine(DATABASE_URL, echo=True)
 
 
 def create_db_and_tables():
