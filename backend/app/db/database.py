@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://clearledger:clearledger@localhost:5432/clearledger_db")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg://clearledger:clearledger@localhost:5432/clearledger_db")
 
 engine = create_engine(DATABASE_URL, echo=True)
 
