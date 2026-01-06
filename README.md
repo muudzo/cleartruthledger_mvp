@@ -48,21 +48,25 @@ This outcome is success. The MVP exists to validate behavior, not to scale.
 
 ```bash
 # Create virtual environment
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Set up database
+# Set up PostgreSQL database
 createdb clearledger_db
 
-# Run migrations (coming soon)
-# python -m backend.app.db.init_db
+# Create database user (optional, if not using default)
+psql -c "CREATE USER clearledger WITH PASSWORD 'clearledger';"
+psql -c "GRANT ALL PRIVILEGES ON DATABASE clearledger_db TO clearledger;"
 
-# Start backend
+# Start backend (database tables will be created automatically)
 uvicorn backend.app.main:app --reload --port 8000
 ```
+
+Backend will be available at `http://localhost:8000`  
+API docs at `http://localhost:8000/docs`
 
 ### Frontend Setup
 
@@ -73,6 +77,8 @@ npm install
 # Start development server
 npm run dev
 ```
+
+Frontend will be available at `http://localhost:5173`
 
 ### Environment Variables
 
