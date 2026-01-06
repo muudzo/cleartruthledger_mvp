@@ -1,7 +1,6 @@
-```python
-from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from typing import Optional
+from jose import JWTError, jwt
 import bcrypt  # Direct usage instead of passlib
 import os
 from dotenv import load_dotenv
