@@ -7,6 +7,8 @@ class User(SQLModel, table=True):
     """User model for authentication"""
     __tablename__ = "users"
     
+    model_config = {"from_attributes": True}
+    
     id: Optional[int] = Field(default=None, primary_key=True)
     email: str = Field(unique=True, index=True, max_length=255)
     password_hash: str = Field(max_length=255)
