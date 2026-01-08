@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.app.api.routes import transactions, dashboard
+# from backend.app.api.routes import transactions, dashboard
 from backend.app.db.database import create_db_and_tables
 # Import models to ensure tables are created
-from backend.app.models.transaction import Transaction
+from backend.app.persistence.models import LedgerEntryModel
 
 app = FastAPI(
     title="ClearLedger API",
@@ -22,8 +22,8 @@ app.add_middleware(
 
 # Include routers
 # Include routers
-app.include_router(transactions.router)
-app.include_router(dashboard.router)
+# app.include_router(transactions.router) # Temporarily disabled
+# app.include_router(dashboard.router) # Removed
 
 
 @app.on_event("startup")
