@@ -33,7 +33,7 @@ class Transaction(SQLModel, table=True):
     __tablename__ = "transactions"
     
     id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="users.id", index=True)
+    user_id: int = Field(index=True)
     
     # Required fields
     amount: float = Field(gt=0)  # Must be positive
@@ -43,8 +43,7 @@ class Transaction(SQLModel, table=True):
     reference: str = Field(max_length=500)
     transaction_date: date = Field(default_factory=date.today)
     
-    # Optional fields
-    screenshot_id: Optional[int] = Field(default=None, foreign_key="files.id")
+    # Optional fields removed (screenshot_id)
     
     # Metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)

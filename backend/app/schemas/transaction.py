@@ -12,7 +12,6 @@ class TransactionCreate(BaseModel):
     status: Status
     reference: str = Field(max_length=500)
     transaction_date: date = Field(default_factory=date.today)
-    screenshot_id: Optional[int] = None
     
     @field_validator('amount')
     @classmethod
@@ -37,7 +36,6 @@ class TransactionResponse(BaseModel):
     status: Status
     reference: str
     transaction_date: date
-    screenshot_id: Optional[int]
     created_at: datetime
     updated_at: datetime
     
