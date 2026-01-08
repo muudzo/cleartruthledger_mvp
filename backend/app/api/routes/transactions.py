@@ -3,10 +3,8 @@ from sqlmodel import Session, select
 from typing import List
 from datetime import date, datetime, timedelta
 from backend.app.db.database import get_session
-from backend.app.models.user import User
 from backend.app.models.transaction import Transaction
 from backend.app.schemas.transaction import TransactionCreate, TransactionUpdate, TransactionResponse
-from backend.app.api.deps import get_current_user
 
 router = APIRouter(prefix="/api/transactions", tags=["transactions"])
 
@@ -14,12 +12,11 @@ router = APIRouter(prefix="/api/transactions", tags=["transactions"])
 @router.post("", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED)
 def create_transaction(
     transaction_data: TransactionCreate,
-    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
     """Create a new transaction"""
     new_transaction = Transaction(
-        user_id=current_user.id,
+        user_id=1,  # Hardcoded tenant for now
         **transaction_data.model_dump()
     )
     
@@ -34,13 +31,12 @@ def create_transaction(
 def update_transaction_status(
     transaction_id: int,
     update_data: TransactionUpdate,
-    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
     """Update transaction status"""
     statement = select(Transaction).where(
         Transaction.id == transaction_id,
-        Transaction.user_id == current_user.id
+        Transaction.user_id == 1  # Hardcoded tenant
     )
     transaction = session.exec(statement).first()
     
@@ -63,12 +59,11 @@ def update_transaction_status(
 @router.get("", response_model=List[TransactionResponse])
 def get_transactions(
     transaction_date: date = Query(default_factory=date.today),
-    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
     """Get transactions for a specific date"""
     statement = select(Transaction).where(
-        Transaction.user_id == current_user.id,
+        Transaction.user_id == 1,  # Hardcoded tenant
         Transaction.transaction_date == transaction_date
     ).order_by(Transaction.created_at.desc())
     
