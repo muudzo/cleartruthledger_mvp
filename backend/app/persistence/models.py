@@ -9,6 +9,9 @@ class LedgerEntryModel(SQLModel, table=True):
     Acts as a dumb sink for immutable facts.
     """
     __tablename__ = "ledger_entries"
+    __table_args__ = (
+        UniqueConstraint("source", "external_reference", "account", name="uq_ledger_entry_idempotency"),
+    )
 
     id: Optional[int] = Field(default=None, primary_key=True)
     
