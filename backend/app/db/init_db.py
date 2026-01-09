@@ -29,8 +29,37 @@ def init_db():
         
         session.exec(create_update_trigger)
         session.exec(create_delete_trigger)
+        
+        # 3. Create Views (Projections)
+        
+        # View: Account Balances
+        create_view_balances = text("""
+        CREATE VIEW IF NOT EXISTS view_account_balances AS
+        SELECT 
+            account,
+            currency,
+            SUM(amount) as balance,
+            COUNT(*) as entry_count,
+            MAX(transaction_date) as last_activity
+        FROM ledger_entries
+        GROUP BY account, currency;
+        """)
+        
+        # View: Trial Balance (Should be zero globally per currency)
+        create_view_trial = text("""
+        CREATE VIEW IF NOT EXISTS view_trial_balance AS
+        SELECT 
+            currency,
+            SUM(amount) as net_balance
+        FROM ledger_entries
+        GROUP BY currency;
+        """)
+        
+        session.exec(create_view_balances)
+        session.exec(create_view_trial)
+        
         session.commit()
-    print("Database triggers applied.")
+    print("Database triggers and views applied.")
 
 if __name__ == "__main__":
     init_db()
