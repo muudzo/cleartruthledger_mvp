@@ -3,6 +3,12 @@ from decimal import Decimal
 from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
+from enum import Enum
+
+class EventType(str, Enum):
+    POSTING = "POSTING"
+    REVERSAL = "REVERSAL"
+
 class LedgerEntry(BaseModel):
     """
     Represents a double-entry ledger record.
@@ -30,4 +36,5 @@ class IngestionEvent(BaseModel):
     source: str
     external_reference: str
     raw_data: dict
+    type: EventType = EventType.POSTING
     occurred_at: datetime

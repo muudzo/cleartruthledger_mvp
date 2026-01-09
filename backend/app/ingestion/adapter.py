@@ -30,6 +30,16 @@ class IngestionAdapter:
         if amount <= 0:
             raise ValueError("Amount must be positive")
 
+        event_type = raw_data.get("type", "POSTING")
+        if event_type not in ["POSTING", "REVERSAL"]:
+             raise ValueError(f"Invalid event type: {event_type}")
+             
+        if event_type == "REVERSAL":
+            if "original_reference" not in raw_data:
+                raise ValueError("REVERSAL event must specify 'original_reference'")
+            # Further logic for reversals (Commit 6) will go here or be expanded.
+            # For now, we enforce the semantic existence.
+
         entries = []
         
         # 2. Create Debit Entry (Asset Increase)
