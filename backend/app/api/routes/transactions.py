@@ -22,8 +22,26 @@ def ingest_event(
         last_entry = session.exec(select(LedgerEntryModel).order_by(LedgerEntryModel.id.desc())).first()
         last_hash = last_entry.entry_hash if last_entry else "0000000000000000000000000000000000000000000000000000000000000000"
         
+        # 0.5. Get Original Entries (if Reversal)
+        original_entries = None
+        if event_payload.get("type") == "REVERSAL":
+             orig_ref = event_payload.get("original_reference")
+             # How to query? We stored "external_reference" as "{ref}-DR" and "{ref}-CR".
+             # So we need to find entries where external_reference LIKE "{orig_ref}-%".
+             # Or we expect orig_ref to be the base reference? 
+             # Logic in adapter: `external_reference=f"{ref}-DR"`.
+             # So if user passes "some-uuid", we look for "some-uuid-DR" and "some-uuid-CR".
+             # Or we look for source matching? Ideally idempotency key was (source, ref, account).
+             # Let's search by containing string or expected suffix?
+             # Safer: Select where external_reference IN (...) ?
+             # But we don't know the suffixes strictly (adapter implementation detail).
+             # Let's try `startswith`.
+             from sqlmodel import col
+             statement = select(LedgerEntryModel).where(col(LedgerEntryModel.external_reference).contains(orig_ref))
+             original_entries = session.exec(statement).all()
+        
         # 1. Adapt/Translate
-        entries = IngestionAdapter.ingest(event_payload, last_hash)
+        entries = IngestionAdapter.ingest(event_payload, last_hash, original_entries)
         
         # 2. Persist
         for entry in entries:
