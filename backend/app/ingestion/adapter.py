@@ -11,12 +11,12 @@ class IngestionAdapter:
     """
     
     @staticmethod
-    def ingest(raw_data: Dict[str, Any]) -> List[LedgerEntryModel]:
+    def ingest(raw_data: Dict[str, Any], last_hash: str = "0000000000000000000000000000000000000000000000000000000000000000") -> List[LedgerEntryModel]:
         """
         Takes raw input (e.g. from API or CSV), validates it,
         and translates it into a balanced set of LedgerEntries.
         
-        Note: This returns persistence models ready for the DB.
+        Requires last_hash to build the tamper-evident chain.
         """
         
         # 1. Extract core fields
@@ -34,7 +34,7 @@ class IngestionAdapter:
         
         # 2. Create Debit Entry (Asset Increase)
         # e.g. Cash received
-        entries.append(LedgerEntryModel(
+        dr_entry = LedgerEntryModel(
             source=source,
             external_reference=f"{ref}-DR", # Append suffix to make unique per leg
             account=account_name,
@@ -42,23 +42,31 @@ class IngestionAdapter:
             currency=currency,
             description=description,
             direction="DEBIT",
-            transaction_date=datetime.utcnow().date()
-        ))
+            transaction_date=datetime.utcnow().date(),
+            prev_hash=last_hash,
+            entry_hash="" # Computed below
+        )
+        dr_entry.entry_hash = dr_entry.compute_hash()
+        entries.append(dr_entry)
+        
+        # Update last_hash for the next entry in the batch
+        current_hash = dr_entry.entry_hash
         
         # 3. Create Credit Entry (Revenue Increase)
         # e.g. Sales Revenue
-        entries.append(LedgerEntryModel(
+        cr_entry = LedgerEntryModel(
             source=source,
             external_reference=f"{ref}-CR",
             account="REVENUE_SALES", # Hardcoded offset for MVP
-            amount=-amount, # Credits are negative in some systems, or just positive magnitude? 
-                           # Ledger Core Invariant 3 says "Derived Balances". 
-                           # Usually Debits + Credits = 0.
-                           # Let's assume signed convention: Assets Positive, Revenue Negative (Credit).
+            amount=-amount, 
             currency=currency,
             description=description,
             direction="CREDIT",
-            transaction_date=datetime.utcnow().date()
-        ))
+            transaction_date=datetime.utcnow().date(),
+            prev_hash=current_hash,
+            entry_hash="" # Computed below
+        )
+        cr_entry.entry_hash = cr_entry.compute_hash()
+        entries.append(cr_entry)
         
         return entries

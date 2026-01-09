@@ -17,8 +17,13 @@ def ingest_event(
     Idempotency is enforced by the database.
     """
     try:
+        # 0. Get Last Hash (Genesis if empty)
+        from sqlmodel import select
+        last_entry = session.exec(select(LedgerEntryModel).order_by(LedgerEntryModel.id.desc())).first()
+        last_hash = last_entry.entry_hash if last_entry else "0000000000000000000000000000000000000000000000000000000000000000"
+        
         # 1. Adapt/Translate
-        entries = IngestionAdapter.ingest(event_payload)
+        entries = IngestionAdapter.ingest(event_payload, last_hash)
         
         # 2. Persist
         for entry in entries:

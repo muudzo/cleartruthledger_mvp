@@ -31,11 +31,16 @@ class LedgerEntryModel(SQLModel, table=True):
     # Metadata
     transaction_date: date = Field(default_factory=date.today)
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Hash Chain
+    prev_hash: str = Field(index=True)
+    entry_hash: str = Field(index=True)
 
     def to_canonical_json(self) -> str:
         """
         Produces a deterministic, canonical JSON representation of the entry.
         Used for hashing and audit.
+        Excludes hash fields themselves to avoid circular dependency.
         """
         data = {
             "source": self.source,
@@ -46,16 +51,19 @@ class LedgerEntryModel(SQLModel, table=True):
             "description": self.description,
             "direction": self.direction,
             "transaction_date": self.transaction_date.isoformat(),
-            # created_at is excluded from canonical hash if it's considered metadata that might vary lightly? 
-            # Or should it be included? 'created_at' is usually system generated. 
-            # Ideally, the hash represents the business fact.
-            # But let's include it if we want strict history. 
-            # However, prompt says "Canonical Serialization for Ledger Entries". 
-            # Let's include everything that defines the fact.
-            "created_at": self.created_at.isoformat() if self.created_at else None
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "prev_hash": self.prev_hash # Include previous hash in the body to chain it
         }
         # Sort keys to ensure determinism
         return json.dumps(data, sort_keys=True, separators=(',', ':'))
+
+    def compute_hash(self) -> str:
+        """
+        Computes the SHA-256 hash of the canonical JSON.
+        """
+        import hashlib
+        canonical = self.to_canonical_json()
+        return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
     
     # No user_id
     # No screenshot_id
