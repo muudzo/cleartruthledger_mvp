@@ -11,7 +11,7 @@ class IngestionAdapter:
     """
     
     @staticmethod
-    def ingest(raw_data: Dict[str, Any], last_hash: str = "0000000000000000000000000000000000000000000000000000000000000000", original_entries: List[LedgerEntryModel] = None) -> List[LedgerEntryModel]:
+    def ingest(raw_data: Dict[str, Any], last_hash: str = None, original_entries: List[LedgerEntryModel] = None) -> List[LedgerEntryModel]:
         """
         Takes raw input (e.g. from API or CSV), validates it,
         and translates it into a balanced set of LedgerEntries using the pure Ledger Core.
@@ -21,29 +21,50 @@ class IngestionAdapter:
         """
         from backend.app import ledger_core
         from backend.app.ledger_core import CoreLedgerEntry
-        
-        # 1. Extract core fields
-        raw_amount = Decimal(str(raw_data.get("amount", 0)))
-        currency = raw_data.get("currency", "USD")
-        source = raw_data.get("source", "MANUAL")
-        ref = raw_data.get("reference", str(uuid.uuid4()))
-        description = raw_data.get("description", "Manual Entry")
-        account_name = raw_data.get("account", "CASH_ON_HAND") # Default to cash
-        
-        event_type = raw_data.get("type", "POSTING")
-        if event_type not in ["POSTING", "REVERSAL"]:
-             raise ValueError(f"Invalid event type: {event_type}")
+        from backend.app.domain.events import LedgerEvent, LedgerEventType
+        from backend.app.constants import INITIAL_HASH
 
+        if last_hash is None:
+             last_hash = INITIAL_HASH
+        
+        # 1. Parse Core Event
+        # This validates the raw input into a domain event
+        try:
+            event_type_str = raw_data.get("type", "POSTING")
+            # Validate type eagerly
+            if event_type_str not in [t.value for t in LedgerEventType]:
+                 raise ValueError(f"Invalid event type: {event_type_str}")
+                 
+            event_args = {
+                "source": raw_data.get("source", "MANUAL"),
+                "external_reference": raw_data.get("reference", str(uuid.uuid4())),
+                "type": LedgerEventType(event_type_str),
+                "data": raw_data,
+                "description": raw_data.get("description", "Manual Entry")
+            }
+            if "occurred_at" in raw_data:
+                event_args["occurred_at"] = raw_data["occurred_at"]
+            
+            event = LedgerEvent(**event_args)
+        except Exception as e:
+             if "Invalid event type" in str(e):
+                 raise e
+             raise ValueError(f"Invalid event data: {str(e)}")
+
+        # 2. Extract Data from Event
+        raw_amount = Decimal(str(event.data.get("amount", 0)))
+        currency = event.currency
+        account_name = event.data.get("account", "CASH_ON_HAND")
+        
         core_entries = []
 
-        if event_type == "REVERSAL":
-            if "original_reference" not in raw_data:
+        if event.type == LedgerEventType.REVERSAL:
+            if "original_reference" not in event.data:
                 raise ValueError("REVERSAL event must specify 'original_reference'")
             if not original_entries:
                  raise ValueError("Original entries not found for reversal")
             
             # Map LedgerEntryModel (Persistence) -> CoreLedgerEntry (Domain)
-            # This is necessary because Core expects its own pure types
             domain_originals = []
             for m in original_entries:
                 domain_originals.append(
@@ -64,10 +85,10 @@ class IngestionAdapter:
 
             core_entries = ledger_core.create_reversal(
                 original_entries=domain_originals,
-                reversal_reference=ref,
-                description=description,
+                reversal_reference=event.external_reference,
+                description=event.description,
                 last_hash=last_hash,
-                created_at=datetime.utcnow()
+                created_at=event.occurred_at
             )
 
         else:
@@ -78,13 +99,13 @@ class IngestionAdapter:
             core_entries = ledger_core.create_posting(
                 amount=raw_amount,
                 currency=currency,
-                source=source,
-                external_reference=ref,
-                description=description,
+                source=event.source,
+                external_reference=event.external_reference,
+                description=event.description,
                 account_name=account_name,
                 last_hash=last_hash,
-                transaction_date=datetime.utcnow().date(),
-                created_at=datetime.utcnow()
+                transaction_date=event.occurred_at.date(), # Use event date!
+                created_at=event.occurred_at
             )
 
         # Map pure CoreLedgerEntry back to Persistence LedgerEntryModel

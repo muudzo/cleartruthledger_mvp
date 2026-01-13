@@ -1,12 +1,9 @@
 from sqlmodel import SQLModel, Field, create_engine, Session
 from typing import Optional
-import os
-from dotenv import load_dotenv
+from backend.app.config import settings
 
-load_dotenv()
-
-# Use SQLite (built into Python, zero setup)
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./clearledger.db")
+# Use settings for DB URL
+DATABASE_URL = settings.DATABASE_URL
 
 # Create engine - add connect_args only for SQLite
 if DATABASE_URL.startswith("sqlite"):

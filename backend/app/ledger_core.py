@@ -53,6 +53,8 @@ class CoreLedgerEntry(BaseModel):
     prev_hash: str
     entry_hash: str
 
+from backend.app.constants import INITIAL_HASH
+
 def compute_entry_hash(entry_data: Dict[str, Any]) -> str:
     """
     Computes the SHA-256 hash of the canonical JSON representation of an entry.

@@ -19,10 +19,10 @@ This is a **behavior-testing instrument**, not a demo. It validates whether merc
 
 ## Technology Stack
 
-- **Frontend**: React + Vite + JavaScript + Tailwind CSS
 - **Backend**: Python + FastAPI + SQLModel
-- **Database**: PostgreSQL
+- **Database**: SQLite (MVP) / PostgreSQL (Deferred)
 - **Auth**: JWT tokens with passlib (bcrypt)
+- **Architecture**: Domain-Driven Design with Pure Ledger Core
 
 ## Success Criteria
 
@@ -68,17 +68,7 @@ uvicorn backend.app.main:app --reload --port 8000
 Backend will be available at `http://localhost:8000`  
 API docs at `http://localhost:8000/docs`
 
-### Frontend Setup
-
-```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-```
-
-Frontend will be available at `http://localhost:5173`
+<!-- Frontend Deprecated. This is a backend-only MVP. -->
 
 ### Environment Variables
 

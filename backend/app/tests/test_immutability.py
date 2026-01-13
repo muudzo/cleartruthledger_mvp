@@ -1,3 +1,7 @@
+import os
+# Force in-memory DB for tests BEFORE importing engine
+os.environ["DATABASE_URL"] = "sqlite://" 
+
 import unittest
 from decimal import Decimal
 from sqlmodel import Session, select, text
@@ -18,6 +22,8 @@ class TestImmutabilityTriggers(unittest.TestCase):
         # If file-based (default), it stays. 
         # To be safe and robust, let's re-apply triggers here or use the init_db function.
         from backend.app.db.init_db import init_db
+        from backend.app.db.database import create_db_and_tables
+        create_db_and_tables() # Ensure tables exist!
         init_db()
         self.session = Session(engine)
 
@@ -38,7 +44,9 @@ class TestImmutabilityTriggers(unittest.TestCase):
             currency="USD",
             direction="DEBIT",
             description="Immutable Entry",
-            transaction_date=date.today()
+            transaction_date=date.today(),
+            prev_hash="hash1",
+            entry_hash="hash2"
         )
         self.session.add(entry)
         self.session.commit()
@@ -68,7 +76,9 @@ class TestImmutabilityTriggers(unittest.TestCase):
             currency="USD",
             direction="DEBIT",
             description="Immutable Entry",
-            transaction_date=date.today()
+            transaction_date=date.today(),
+            prev_hash="hash3",
+            entry_hash="hash4"
         )
         self.session.add(entry)
         self.session.commit()
