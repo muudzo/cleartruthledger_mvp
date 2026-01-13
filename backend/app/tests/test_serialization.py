@@ -18,7 +18,7 @@ class TestCanonicalSerialization(unittest.TestCase):
             amount=Decimal("100.50"),
             currency="USD",
             direction="DEBIT",
-            description="Test Serialization",
+            description="TestSerialization",
             transaction_date=date(2023, 1, 1),
             created_at=now
         )

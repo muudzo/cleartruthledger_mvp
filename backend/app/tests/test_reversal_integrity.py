@@ -25,7 +25,8 @@ class TestReversalIntegrity(unittest.TestCase):
             amount=Decimal("100.00"),
             currency="USD",
             direction="DEBIT",
-            prev_hash=""
+            prev_hash="",
+            entry_hash="HASH-DR"
         )
         orig_cr = LedgerEntryModel(
             source="MANUAL",
@@ -34,7 +35,8 @@ class TestReversalIntegrity(unittest.TestCase):
             amount=Decimal("-100.00"),
             currency="USD",
             direction="CREDIT",
-            prev_hash=""
+            prev_hash="",
+            entry_hash="HASH-CR"
         )
         
         payload = {

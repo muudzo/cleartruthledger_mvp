@@ -59,6 +59,8 @@ class TestReversal(unittest.TestCase):
                                    # In pure double entry, you usually credit the debit account.
                                    # But sum(amount) works regardless of sign/direction labeling 
                                    # if we treat amount as signed.
+                prev_hash="last",
+                entry_hash="hash1"
             ),
              LedgerEntryModel(
                 source="MANUAL",
@@ -67,6 +69,8 @@ class TestReversal(unittest.TestCase):
                 amount=Decimal("100"), # Compensating
                 currency="USD",
                 direction="CREDIT",
+                prev_hash="hash1",
+                entry_hash="hash2"
             )
         ]
         
