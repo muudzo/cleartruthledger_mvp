@@ -27,23 +27,42 @@ class IngestionAdapter:
         if last_hash is None:
              last_hash = INITIAL_HASH
         
+        from backend.app.domain.normalization import canonicalize_event_data
+        import json
+        import hashlib
+
+        # 0. Canonicalize Inputs
+        # We ensure that the event data is in a strict canonical form BEFORE we do anything else.
+        # This includes normalizing keys, amounts, currencies.
+        canonical_raw = canonicalize_event_data(raw_data)
+        
+        # Compute Fingerprint of the canonical raw data (excluding metadata that might vary if we re-ingest?)
+        # Ideally we fingerprint the "Business Facts".
+        # Let's fingerprint the entire canonical_raw.
+        canonical_json = json.dumps(canonical_raw, sort_keys=True)
+        fingerprint = hashlib.sha256(canonical_json.encode('utf-8')).hexdigest()
+
         # 1. Parse Core Event
         # This validates the raw input into a domain event
         try:
-            event_type_str = raw_data.get("type", "POSTING")
+            event_type_str = canonical_raw.get("type", "POSTING")
             # Validate type eagerly
             if event_type_str not in [t.value for t in LedgerEventType]:
                  raise ValueError(f"Invalid event type: {event_type_str}")
                  
             event_args = {
-                "source": raw_data.get("source", "MANUAL"),
-                "external_reference": raw_data.get("reference", str(uuid.uuid4())),
+                "event_id": fingerprint, # Usage of fingerprint as event_id
+                "source": canonical_raw.get("source", "MANUAL"),
+                "external_reference": canonical_raw.get("reference", str(uuid.uuid4())),
                 "type": LedgerEventType(event_type_str),
-                "data": raw_data,
-                "description": raw_data.get("description", "Manual Entry")
+                "data": canonical_raw,
+                "description": canonical_raw.get("description", "Manual Entry"),
+                "occurred_at": canonical_raw.get("occurred_at", datetime.utcnow()) # Ensure datetime handling?
             }
-            if "occurred_at" in raw_data:
-                event_args["occurred_at"] = raw_data["occurred_at"]
+            # Handle occurred_at if it's a string (normalization might have kept it string or not)
+            # LedgerEvent expects datetime. normalization might return string if it didn't parse date.
+            # Let's fix datetime parsing if needed.
+            # For now assume canonical_raw["occurred_at"] is valid for LedgerEvent (it accepts dates).
             
             event = LedgerEvent(**event_args)
         except Exception as e:

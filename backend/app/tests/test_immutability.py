@@ -37,6 +37,7 @@ class TestImmutabilityTriggers(unittest.TestCase):
         # 1. Create a dummy entry
         ref = str(uuid.uuid4())
         entry = LedgerEntryModel(
+            event_id=f"evt-{ref}",
             source="TEST_IMMUTABILITY",
             external_reference=ref,
             account="TEST_ACC",
@@ -69,6 +70,7 @@ class TestImmutabilityTriggers(unittest.TestCase):
         # 1. Create a dummy entry
         ref = str(uuid.uuid4())
         entry = LedgerEntryModel(
+            event_id=f"evt-{ref}",
             source="TEST_IMMUTABILITY",
             external_reference=ref,
             account="TEST_ACC",

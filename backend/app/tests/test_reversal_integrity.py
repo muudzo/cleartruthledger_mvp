@@ -19,6 +19,7 @@ class TestReversalIntegrity(unittest.TestCase):
     def test_reversal_negates_original_entries(self):
         # 1. Create Mock Original Entries
         orig_dr = LedgerEntryModel(
+            event_id="evt-orig",
             source="MANUAL",
             external_reference="REF-DR",
             account="CASH",
@@ -29,6 +30,7 @@ class TestReversalIntegrity(unittest.TestCase):
             entry_hash="HASH-DR"
         )
         orig_cr = LedgerEntryModel(
+            event_id="evt-orig",
             source="MANUAL",
             external_reference="REF-CR",
             account="SALES",

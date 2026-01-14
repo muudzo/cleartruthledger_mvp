@@ -50,6 +50,7 @@ class TestReversal(unittest.TestCase):
         # Constructing compensating entries manually for the test
         reversal_entries = [
             LedgerEntryModel(
+                event_id="evt-rev-dr",
                 source="MANUAL",
                 external_reference="REF_A_REVERSAL_DR",
                 account="CASH",
@@ -63,6 +64,7 @@ class TestReversal(unittest.TestCase):
                 entry_hash="hash1"
             ),
              LedgerEntryModel(
+                event_id="evt-rev-cr",
                 source="MANUAL",
                 external_reference="REF_A_REVERSAL_CR",
                 account="REVENUE_SALES",

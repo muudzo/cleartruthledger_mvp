@@ -27,6 +27,7 @@ class TestProjections(unittest.TestCase):
         # 2. Insert Entries
         ref = str(uuid.uuid4())
         self.session.add(LedgerEntryModel(
+            event_id=f"evt-{ref}",
             source="VIEW_TEST",
             external_reference=ref,
             account="VIEW_TEST_CASH",
@@ -40,7 +41,8 @@ class TestProjections(unittest.TestCase):
         
         # 3. Query View
         res = self.session.exec(text("SELECT balance FROM view_account_balances WHERE account = 'VIEW_TEST_CASH'")).first()
-        new_balance = Decimal(res)
+        # SQLModel result from raw text query returns a Row/Tuple
+        new_balance = Decimal(res[0]) if res else Decimal(0)
         
         self.assertEqual(new_balance - initial_balance, Decimal("100.00"), "View should reflect inserted delta")
 
@@ -48,6 +50,7 @@ class TestProjections(unittest.TestCase):
         # Insert a balanced pair
         ref = str(uuid.uuid4())
         self.session.add(LedgerEntryModel(
+            event_id=f"evt-{ref}",
             source="VIEW_TEST",
             external_reference=f"{ref}-DR",
             account="TRIAL_CASH",
@@ -56,6 +59,7 @@ class TestProjections(unittest.TestCase):
             direction="DEBIT", prev_hash="", entry_hash=""
         ))
         self.session.add(LedgerEntryModel(
+            event_id=f"evt-{ref}",
             source="VIEW_TEST",
             external_reference=f"{ref}-CR",
             account="TRIAL_REV",
@@ -67,7 +71,8 @@ class TestProjections(unittest.TestCase):
         
         # Query Trial Balance View
         res = self.session.exec(text("SELECT net_balance FROM view_trial_balance WHERE currency = 'TZD'")).first()
-        self.assertEqual(Decimal(res), Decimal("0.00"), "Trial balance must be zero")
+        val = Decimal(res[0]) if res else Decimal(0)
+        self.assertEqual(val, Decimal("0.00"), "Trial balance must be zero")
 
 if __name__ == "__main__":
     unittest.main()

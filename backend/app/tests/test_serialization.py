@@ -12,6 +12,7 @@ class TestCanonicalSerialization(unittest.TestCase):
         """
         now = datetime.utcnow()
         entry = LedgerEntryModel(
+            event_id="evt-ser-1",
             source="TEST_SRC",
             external_reference="REF123",
             account="CASH",
@@ -33,8 +34,8 @@ class TestCanonicalSerialization(unittest.TestCase):
         self.assertIn('"amount":"100.50"', json1, "Decimals must be serialized as strings")
         
     def test_different_entries_produce_different_json(self):
-        entry1 = LedgerEntryModel(source="A", external_reference="A", account="A")
-        entry2 = LedgerEntryModel(source="B", external_reference="A", account="A")
+        entry1 = LedgerEntryModel(event_id="evt-1", source="A", external_reference="A", account="A")
+        entry2 = LedgerEntryModel(event_id="evt-2", source="B", external_reference="A", account="A")
         
         self.assertNotEqual(entry1.to_canonical_json(), entry2.to_canonical_json())
 

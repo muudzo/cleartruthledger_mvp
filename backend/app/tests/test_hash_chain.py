@@ -10,6 +10,7 @@ class TestLedgerHashChain(unittest.TestCase):
         Test that hash computation includes prev_hash and is deterministic.
         """
         entry = LedgerEntryModel(
+            event_id="evt-chain-1",
             source="CHAIN_TEST",
             external_reference="REF1",
             account="CASH",

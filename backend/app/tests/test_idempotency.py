@@ -84,12 +84,11 @@ def test_adapter_propagates_event_id():
     assert entries[0].event_id is not None
     assert entries[0].event_id == entries[1].event_id
     
-    # Check deterministic generation logic was used effectively
-    event = LedgerEvent(**{
-        "source": "TEST_ADAPTER", 
-        "external_reference": "ref-adapter-1", 
-        "occurred_at": raw_event["occurred_at"], 
-        "data": raw_event
-    })
-    assert entries[0].event_id == event.event_id
+    # Verify the event_id matches the fingerprint of the raw event (as per Adapter logic)
+    # import logic to verify
+    from backend.app.domain.normalization import canonicalize_event_data
+    canon = canonicalize_event_data(raw_event)
+    expected_id = hashlib.sha256(json.dumps(canon, sort_keys=True).encode("utf-8")).hexdigest()
+    
+    assert entries[0].event_id == expected_id
 
