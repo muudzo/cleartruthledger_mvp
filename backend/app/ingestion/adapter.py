@@ -125,6 +125,18 @@ class IngestionAdapter:
             if not original_entries:
                  raise ValueError("Original entries not found for reversal")
             
+            # Check Integrity: Original Event should not be a REVERSAL
+            # We iterate original_entries. But we don't easily know their event type just from LedgerEntryModel
+            # unless we query the event store or look at metadata (like description).
+            # The 'type' is on the LedgerEntryModel (wait, LedgerEntryModel doesn't have type).
+            # The type is on the LedgerEvent.
+            # Ideally, we should fetch the original EVENT first.
+            # But we are working with entries.
+            # We can check if any entry description starts with "REVERSAL:".
+            for m in original_entries:
+                if m.description and m.description.startswith("REVERSAL:"):
+                     raise ValueError("Cannot reverse a reversal event.")
+
             # Map LedgerEntryModel (Persistence) -> CoreLedgerEntry (Domain)
             domain_originals = []
             for m in original_entries:

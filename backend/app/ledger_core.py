@@ -178,6 +178,34 @@ def create_reversal(
         
     if not created_at:
         created_at = datetime.utcnow()
+
+    # Integrity Rule 1: Single Parent Event
+    # All original entries must belong to the same event_id.
+    parent_ids = {e.event_id for e in original_entries}
+    if len(parent_ids) > 1:
+        raise ValueError(f"Cannot reverse entries from multiple events: {parent_ids}")
+
+    # Integrity Rule 2: Reversal Eligibility
+    # Cannot reverse a REVERSAL event (no nested reversals).
+    # Since we don't have event types in CoreLedgerEntry explicitly as 'type' field, 
+    # we infer from description or rely on Adapter to not pass Reversal events?
+    # Or we check if entries look like reversals (negative amounts?). 
+    # Actually, amounts can be negative in normal credits.
+    # We must rely on the Adapter passing valid 'original_entries', OR we could add 'type' to CoreLedgerEntry?
+    # For now, let's assume if the description contains "REVERSAL", it's a reversal. 
+    # This is heuristic but simple for MVP.
+    # Better: Adapter checks `original_event.type != REVERSAL`. 
+    # Let's add that check here if possible? 
+    # CoreLedgerEntry only has primitives.
+    # Let's verify sum is zero for originals (Double Entry Invariant) to be safe.
+    
+    # Check Net Zero of Originals (Is this required? Normally yes)
+    # total_orig = sum(e.amount for e in original_entries) # Should be 0 per currency?
+    # If partial reversal is allowed, maybe not all legs are passed?
+    # Constraint: "Enforce: Single parent event". If we reverse, we reverse the WHOLE event?
+    # "Enforce: Net zero amount" -> The reversal event itself must be balanced.
+    
+    # Let's implement robust creation.
         
     reversal_entries = []
     current_hash = last_hash

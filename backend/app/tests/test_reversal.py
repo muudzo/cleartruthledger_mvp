@@ -84,5 +84,52 @@ class TestReversal(unittest.TestCase):
         final_balance = sum(e.amount for e in self.session.query(LedgerEntryModel).filter_by(account="CASH").all())
         self.assertEqual(final_balance, Decimal("0"), "Balance should return to zero after reversal")
 
+
+    def test_reversal_integrity_nested_reversal(self):
+        """
+        Verify rejection of nested reversals (reversing a reversal).
+        """
+        # 1. Create a Reversal Entry (mocked)
+        entry = LedgerEntryModel(
+            event_id="evt-rev",
+            ingest_sequence=1,
+            source="MANUAL",
+            external_reference="REF_REV",
+            account="CASH",
+            amount=Decimal("100"),
+            currency="USD",
+            description="REVERSAL: Correction",
+            direction="DEBIT",
+            prev_hash="",
+            entry_hash="hash"
+        )
+        
+        # 2. Attempt to Reverse it
+        payload = {
+            "type": "REVERSAL",
+            "reference": "REV_REV_REF",
+            "original_reference": "REF_REV",
+            "description": "Meta Reversal"
+        }
+        
+        with self.assertRaises(ValueError) as cm:
+             IngestionAdapter.ingest(payload, original_entries=[entry])
+        
+        self.assertIn("Cannot reverse a reversal", str(cm.exception))
+
+    def test_reversal_integrity_multiple_parents(self):
+        """
+        Verify rejection of reversing entries from mixed events.
+        """
+        e1 = LedgerEntryModel(event_id="e1", description="1", source="1", external_reference="1", account="1", amount=1, currency="USD", direction="DR", prev_hash="1", entry_hash="1")
+        e2 = LedgerEntryModel(event_id="e2", description="2", source="2", external_reference="2", account="2", amount=1, currency="USD", direction="DR", prev_hash="2", entry_hash="2")
+        
+        payload = {"type": "REVERSAL", "original_reference": "REF_MIXED", "description": "Mixed"}
+        
+        with self.assertRaises(ValueError) as cm:
+             IngestionAdapter.ingest(payload, original_entries=[e1, e2])
+             
+        self.assertIn("multiple events", str(cm.exception))
+
 if __name__ == '__main__':
     unittest.main()
