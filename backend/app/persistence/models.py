@@ -17,6 +17,8 @@ class LedgerEntryModel(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     
+    event_id: str = Field(index=True) # ID of the event that caused this entry
+    
     # Core Identity
     source: str = Field(index=True)
     external_reference: str = Field(index=True)
@@ -43,6 +45,7 @@ class LedgerEntryModel(SQLModel, table=True):
         Excludes hash fields themselves to avoid circular dependency.
         """
         data = {
+            "event_id": self.event_id,
             "source": self.source,
             "external_reference": self.external_reference,
             "account": self.account,
