@@ -23,6 +23,7 @@ class LedgerEntryModel(SQLModel, table=True):
     source: str = Field(index=True)
     external_reference: str = Field(index=True)
     account: str = Field(index=True)
+    ingest_sequence: int = Field(default=0, index=True) # Monotonic sequence for deterministic ordering
     
     # Value
     amount: Decimal = Field(default=0, decimal_places=2)
@@ -46,6 +47,7 @@ class LedgerEntryModel(SQLModel, table=True):
         """
         data = {
             "event_id": self.event_id,
+            "ingest_sequence": self.ingest_sequence,
             "source": self.source,
             "external_reference": self.external_reference,
             "account": self.account,

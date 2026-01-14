@@ -40,6 +40,7 @@ class CoreLedgerEntry(BaseModel):
     model_config = ConfigDict(frozen=True)
     
     event_id: str
+    ingest_sequence: int
     source: str
     external_reference: str
     account: str
@@ -60,7 +61,7 @@ def compute_entry_hash(entry_data: Dict[str, Any]) -> str:
     """
     Computes the SHA-256 hash of the canonical JSON representation of an entry.
     The dictionary MUST contain:
-    - event_id, source, external_reference, account, amount, currency, description, direction, 
+    - event_id, ingest_sequence, source, external_reference, account, amount, currency, description, direction, 
       transaction_date, created_at, prev_hash.
     
     It MUST NOT contain 'entry_hash' (circular).
@@ -71,6 +72,7 @@ def compute_entry_hash(entry_data: Dict[str, Any]) -> str:
     
     clean_data = {
         "event_id": entry_data["event_id"],
+        "ingest_sequence": entry_data["ingest_sequence"],
         "source": entry_data["source"],
         "external_reference": entry_data["external_reference"],
         "account": entry_data["account"],
@@ -90,6 +92,7 @@ def create_posting(
     amount: Decimal,
     currency: str,
     event_id: str,
+    ingest_sequence: int,
     source: str,
     external_reference: str,
     description: str,
@@ -118,6 +121,7 @@ def create_posting(
     # 1. Debit Entry
     dr_data = {
         "event_id": event_id,
+        "ingest_sequence": ingest_sequence,
         "source": source,
         "external_reference": f"{external_reference}-DR",
         "account": account_name,
@@ -135,6 +139,7 @@ def create_posting(
     # 2. Credit Entry
     cr_data = {
         "event_id": event_id,
+        "ingest_sequence": ingest_sequence,
         "source": source,
         "external_reference": f"{external_reference}-CR",
         "account": "REVENUE_SALES", # MVP logic
@@ -154,6 +159,7 @@ def create_posting(
 def create_reversal(
     original_entries: List[CoreLedgerEntry],
     event_id: str,
+    ingest_sequence: int,
     reversal_reference: str, # UUID for the reversal event
     description: str,
     last_hash: str,
@@ -192,6 +198,7 @@ def create_reversal(
 
         rev_data = {
             "event_id": event_id,
+            "ingest_sequence": ingest_sequence,
             "source": orig.source,
             "external_reference": new_ref,
             "account": orig.account,

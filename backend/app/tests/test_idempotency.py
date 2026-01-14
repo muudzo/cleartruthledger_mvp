@@ -57,7 +57,8 @@ def test_core_entry_hashing_includes_event_id():
         "direction": "DEBIT",
         "transaction_date": datetime(2023, 1, 1).date(),
         "created_at": datetime(2023, 1, 1),
-        "prev_hash": "0000"
+        "prev_hash": "0000",
+        "ingest_sequence": 0 # Default sequence
     }
     
     data1 = {**base_data, "event_id": "id-1"}

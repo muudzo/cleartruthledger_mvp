@@ -11,13 +11,14 @@ class IngestionAdapter:
     """
     
     @staticmethod
-    def ingest(raw_data: Dict[str, Any], last_hash: str = None, original_entries: List[LedgerEntryModel] = None) -> List[LedgerEntryModel]:
+    def ingest(raw_data: Dict[str, Any], last_hash: str = None, original_entries: List[LedgerEntryModel] = None, ingest_sequence: int = 0) -> List[LedgerEntryModel]:
         """
         Takes raw input (e.g. from API or CSV), validates it,
         and translates it into a balanced set of LedgerEntries using the pure Ledger Core.
         
         Requires last_hash to build the tamper-evident chain.
         Requires original_entries if type is REVERSAL.
+        Requires ingest_sequence to ensure deterministic ordering (default 0 for tests/legacy).
         """
         from backend.app import ledger_core
         from backend.app.ledger_core import CoreLedgerEntry
@@ -130,6 +131,7 @@ class IngestionAdapter:
                 domain_originals.append(
                     CoreLedgerEntry(
                         event_id=m.event_id,
+                        ingest_sequence=m.ingest_sequence,
                         source=m.source,
                         external_reference=m.external_reference,
                         account=m.account,
@@ -147,6 +149,7 @@ class IngestionAdapter:
             core_entries = ledger_core.create_reversal(
                 original_entries=domain_originals,
                 event_id=event.event_id,
+                ingest_sequence=ingest_sequence,
                 reversal_reference=event.external_reference,
                 description=event.description,
                 last_hash=last_hash,
@@ -162,6 +165,7 @@ class IngestionAdapter:
                 amount=raw_amount,
                 currency=currency,
                 event_id=event.event_id,
+                ingest_sequence=ingest_sequence,
                 source=event.source,
                 external_reference=event.external_reference,
                 description=event.description,
