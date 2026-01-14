@@ -109,6 +109,11 @@ def create_posting(
     2. Create Debit (Asset Increase) for the specified account.
     3. Create Credit (Revenue/Equity) for the offset account (Hardcoded REVENUE_SALES for MVP).
     4. Chain hashes: Last -> Debit -> Credit.
+    
+    TRUST BOUNDARY:
+    This function assumes `event_id` is unique and `ingest_sequence` is monotonic. 
+    Violations of these assumptions must be caught by the Persistence Layer (DB Constraints) 
+    or the Ingestion Service before calling this core logic.
     """
     if amount <= 0:
         raise ValueError("Posting amount must be positive. Use Reversal for corrections.")
@@ -172,6 +177,11 @@ def create_reversal(
     1. Iterate through original entries.
     2. Create a new entry with NEGATED amount for each.
     3. Chain hashes sequentially.
+    
+    TRUST BOUNDARY:
+    This function requires `original_entries` to be a correct and complete set of the 
+    entries to be reversed. It does not query the database to verify if they are 
+    already reversed. Double-reversal prevention is the responsibility of the Adapter/Service.
     """
     if not original_entries:
         raise ValueError("No entries to reverse.")

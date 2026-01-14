@@ -19,6 +19,11 @@ class IngestionAdapter:
         Requires last_hash to build the tamper-evident chain.
         Requires original_entries if type is REVERSAL.
         Requires ingest_sequence to ensure deterministic ordering (default 0 for tests/legacy).
+        
+        ADAPTER RESPONSIBILITY:
+        - Guaranteeing unique `ingest_sequence` (via caller).
+        - Preventing double-submission of `event_id` (via Persistence Layer hooks).
+        - Ensuring `last_hash` is the actual latest hash of the chain.
         """
         from backend.app import ledger_core
         from backend.app.ledger_core import CoreLedgerEntry
